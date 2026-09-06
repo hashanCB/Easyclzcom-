@@ -13,6 +13,14 @@ The repo is a monorepo of four independent apps plus a shared Supabase backend.
 | Marketing site | [`easyclz.com/`](easyclz.com) | Next.js | Public site at easyclz.com |
 | Backend | [`super-admin/packages/db-schema/supabase/`](super-admin/packages/db-schema/supabase) | Supabase | Postgres schema, RLS policies, Edge Functions |
 
+## Architecture
+
+A full top-down walkthrough — context diagram, the four clients, the Supabase
+backend, the identity/role model, the read/write split, data model, edge
+functions, offline sync, notifications, payments, online exams, environments and
+the security model — is in [`docs/ARCHITECTURE.html`](docs/ARCHITECTURE.html).
+There is also a field report on building it with agentic AI: [`ARTICLE.md`](ARTICLE.md).
+
 ## Getting started
 
 Each app is self-contained. Pick one:
