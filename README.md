@@ -1,4 +1,6 @@
 # ClassS / Easyclz
+<img width="1262" height="725" alt="Screenshot 2026-09-07 at 00 41 40" src="https://github.com/user-attachments/assets/8c9cb8f3-e50f-49ee-b3fe-d264d410106a" />
+
 
 Open-source class-management platform for tuition teachers: attendance, fees,
 student communication, notes, exams and a public student portal.
