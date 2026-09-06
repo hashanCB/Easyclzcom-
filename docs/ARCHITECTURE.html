@@ -1,0 +1,841 @@
+<title>Easyclz Architecture</title>
+<meta name="description" content="High-level architecture and technical plan for the ClassS / Easyclz class-management platform." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" />
+
+<style>
+  :root {
+    --ground: #f7f9fc;
+    --surface: #ffffff;
+    --raised: #eef2f8;
+    --ink: #141821;
+    --ink-soft: #4a5568;
+    --hairline: #dfe4ee;
+    --accent: #2f4b8f;
+    --accent-ink: #274279;
+    --wire: #0f7d78;
+    --signal: #a5541a;
+    --diag-line: #8b97ac;
+    --diag-fill: #eef2f8;
+    --diag-accent: #2f4b8f;
+    --diag-wire: #0f7d78;
+    --diag-ink: #141821;
+    --shadow: 0 1px 2px rgba(20, 24, 40, 0.04), 0 12px 32px rgba(20, 24, 40, 0.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0f1116;
+      --surface: #161a21;
+      --raised: #1c212b;
+      --ink: #e6e9f0;
+      --ink-soft: #9aa4b6;
+      --hairline: #2a303c;
+      --accent: #7b9be0;
+      --accent-ink: #9ab3ea;
+      --wire: #52c7bf;
+      --signal: #dd9b62;
+      --diag-line: #6b7688;
+      --diag-fill: #1c212b;
+      --diag-accent: #7b9be0;
+      --diag-wire: #52c7bf;
+      --diag-ink: #e6e9f0;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 32px rgba(0,0,0,0.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0f1116;
+    --surface: #161a21;
+    --raised: #1c212b;
+    --ink: #e6e9f0;
+    --ink-soft: #9aa4b6;
+    --hairline: #2a303c;
+    --accent: #7b9be0;
+    --accent-ink: #9ab3ea;
+    --wire: #52c7bf;
+    --signal: #dd9b62;
+    --diag-line: #6b7688;
+    --diag-fill: #1c212b;
+    --diag-accent: #7b9be0;
+    --diag-wire: #52c7bf;
+    --diag-ink: #e6e9f0;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 32px rgba(0,0,0,0.35);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    font-size: 1.02rem;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    display: grid;
+    grid-template-columns: 1fr;
+    max-width: 52rem;
+    margin: 0 auto;
+    padding: 0 1.4rem 6rem;
+  }
+  @media (min-width: 1080px) {
+    .page {
+      max-width: 68rem;
+      grid-template-columns: 13rem 1fr;
+      gap: 3.5rem;
+      padding-right: 2rem;
+    }
+  }
+
+  /* ---- side nav ---- */
+  nav.toc {
+    display: none;
+  }
+  @media (min-width: 1080px) {
+    nav.toc {
+      display: block;
+      align-self: start;
+      position: sticky;
+      top: 2rem;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.76rem;
+      line-height: 1.5;
+      border-left: 1px solid var(--hairline);
+      padding: 0.2rem 0 0.2rem 1rem;
+    }
+    nav.toc a {
+      display: block;
+      color: var(--ink-soft);
+      text-decoration: none;
+      padding: 0.3rem 0;
+    }
+    nav.toc a:hover { color: var(--accent-ink); }
+    nav.toc .grp {
+      color: var(--ink);
+      margin-top: 1rem;
+      letter-spacing: 0.04em;
+    }
+  }
+
+  main { min-width: 0; }
+
+  /* ---- masthead ---- */
+  header.top {
+    padding: 3.5rem 0 2rem;
+    border-bottom: 2px solid var(--ink);
+    margin-bottom: 3rem;
+  }
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+    margin: 0 0 1.2rem;
+  }
+  h1 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 500;
+    font-size: clamp(2.1rem, 5.5vw, 3.1rem);
+    line-height: 1.1;
+    letter-spacing: -0.012em;
+    text-wrap: balance;
+    margin: 0 0 1rem;
+  }
+  .lede {
+    font-size: 1.12rem;
+    color: var(--ink-soft);
+    max-width: 40rem;
+    margin: 0;
+  }
+  .meta {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+    margin-top: 1.8rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 1.5rem;
+  }
+  .meta a { color: var(--accent-ink); text-decoration: none; }
+
+  /* ---- sections ---- */
+  section { margin: 3.4rem 0; scroll-margin-top: 2rem; }
+  .sh {
+    display: flex;
+    align-items: baseline;
+    gap: 0.85rem;
+    margin: 0 0 1.3rem;
+    padding-top: 1.4rem;
+    border-top: 1px solid var(--hairline);
+  }
+  .sh .n {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.78rem;
+    color: var(--accent-ink);
+    flex-shrink: 0;
+    padding-top: 0.3rem;
+  }
+  h2 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 500;
+    font-size: clamp(1.5rem, 3.2vw, 1.85rem);
+    line-height: 1.2;
+    text-wrap: balance;
+    margin: 0;
+  }
+  h3 {
+    font-weight: 600;
+    font-size: 1rem;
+    margin: 1.9rem 0 0.5rem;
+    color: var(--ink);
+  }
+  p { margin: 0 0 1.1rem; }
+  a { color: var(--accent-ink); }
+  ul, ol { margin: 0 0 1.1rem; padding-left: 1.25rem; }
+  li { margin-bottom: 0.45rem; }
+  li::marker { color: var(--accent); }
+  code {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.86em;
+    background: var(--raised);
+    padding: 0.1em 0.38em;
+    border-radius: 3px;
+  }
+
+  /* ---- figures / diagrams ---- */
+  figure {
+    margin: 2rem 0;
+    padding: 0;
+  }
+  .diagram {
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: 6px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+    overflow-x: auto;
+  }
+  .diagram svg { display: block; width: 100%; height: auto; min-width: 460px; }
+  figcaption {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.74rem;
+    color: var(--ink-soft);
+    margin-top: 0.7rem;
+    padding-left: 0.1rem;
+  }
+  figcaption b { color: var(--ink); font-weight: 500; }
+
+  /* ---- screenshot slots ---- */
+  .shot {
+    background: var(--raised);
+    border: 1.5px dashed var(--diag-line);
+    border-radius: 6px;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    text-align: center;
+    padding: 2rem 1.5rem;
+    color: var(--ink-soft);
+  }
+  .shot .lab {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.05em;
+    color: var(--ink);
+  }
+  .shot .hint { font-size: 0.82rem; max-width: 26rem; }
+  .shot img { border-radius: 4px; border: 1px solid var(--hairline); }
+
+  /* ---- tables ---- */
+  .tw { overflow-x: auto; margin: 1.6rem 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+  th, td {
+    text-align: left;
+    padding: 0.65rem 0.85rem;
+    border-bottom: 1px solid var(--hairline);
+    vertical-align: top;
+  }
+  thead th {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--ink-soft);
+    font-weight: 500;
+    border-bottom: 1.5px solid var(--ink-soft);
+  }
+  tbody td:first-child { font-weight: 600; white-space: nowrap; }
+  .mono { font-family: "IBM Plex Mono", monospace; font-size: 0.85rem; }
+
+  /* ---- note callout ---- */
+  .note {
+    border-left: 3px solid var(--signal);
+    background: var(--surface);
+    padding: 0.9rem 1.1rem;
+    margin: 1.6rem 0;
+    border-radius: 0 4px 4px 0;
+    font-size: 0.94rem;
+  }
+  .note .k {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--signal);
+    display: block;
+    margin-bottom: 0.3rem;
+  }
+
+  footer {
+    margin-top: 4rem;
+    padding-top: 1.4rem;
+    border-top: 1px solid var(--hairline);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+  }
+  footer a { color: var(--accent-ink); text-decoration: none; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html { scroll-behavior: smooth; }
+  }
+
+  /* diagram helper classes used inside SVG */
+  .d-box { fill: var(--diag-fill); stroke: var(--diag-line); stroke-width: 1.5; }
+  .d-box-a { fill: var(--diag-fill); stroke: var(--diag-accent); stroke-width: 1.75; }
+  .d-lbl { fill: var(--diag-ink); font-family: "IBM Plex Sans", sans-serif; font-size: 13px; font-weight: 500; }
+  .d-sub { fill: var(--diag-line); font-family: "IBM Plex Mono", monospace; font-size: 10.5px; }
+  .d-flow { stroke: var(--diag-line); stroke-width: 1.5; fill: none; }
+  .d-flow-a { stroke: var(--diag-accent); stroke-width: 2; fill: none; }
+  .d-flow-w { stroke: var(--diag-wire); stroke-width: 2; fill: none; }
+  .d-note { fill: var(--diag-line); font-family: "IBM Plex Mono", monospace; font-size: 10px; }
+</style>
+
+<div class="page">
+  <nav class="toc" aria-label="Contents">
+    <span class="grp">Overview</span>
+    <a href="#context">01 · System context</a>
+    <a href="#clients">02 · The four clients</a>
+    <span class="grp">Backend</span>
+    <a href="#supabase">03 · Supabase backend</a>
+    <a href="#identity">04 · Identity &amp; roles</a>
+    <a href="#readwrite">05 · Read / write split</a>
+    <a href="#data">06 · Data model</a>
+    <a href="#functions">07 · Edge functions</a>
+    <span class="grp">Subsystems</span>
+    <a href="#offline">08 · Offline sync</a>
+    <a href="#notify">09 · Notifications</a>
+    <a href="#payments">10 · Payments</a>
+    <a href="#exam">11 · Online exams</a>
+    <span class="grp">Delivery</span>
+    <a href="#env">12 · Environments</a>
+    <a href="#security">13 · Security model</a>
+    <a href="#screens">14 · Screens</a>
+  </nav>
+
+  <main>
+    <header class="top">
+      <p class="eyebrow">Architecture &amp; Technical Plan</p>
+      <h1>How Easyclz is put together</h1>
+      <p class="lede">A class-management platform for tuition teachers: four client apps, one Postgres database, and a security boundary that the database itself enforces. This document walks the whole system top-down — the moving parts, why each one exists, and how a request travels through it.</p>
+      <div class="meta">
+        <span>ClassS / Easyclz</span>
+        <span>By Hashan Chanaka</span>
+        <a href="https://github.com/hashanCB/Easyclzcom-">github.com/hashanCB/Easyclzcom-</a>
+      </div>
+    </header>
+
+    <!-- 01 ---------------------------------------------------------------- -->
+    <section id="context">
+      <div class="sh"><span class="n">01</span><h2>System context</h2></div>
+      <p>Everything is arranged around a single principle: <strong>one database of record, many thin clients, and one place where access rules live</strong>. There is no bespoke API server to operate. Clients either read straight from Postgres (guarded by row-level security) or call a small serverless function for anything that needs a secret or a server-side check.</p>
+
+      <figure>
+        <div class="diagram">
+          <svg viewBox="0 0 720 430" role="img" aria-label="System context diagram">
+            <!-- clients -->
+            <g>
+              <rect class="d-box" x="20" y="30" width="150" height="46" rx="5"/>
+              <text class="d-lbl" x="34" y="52">Teacher app</text>
+              <text class="d-sub" x="34" y="67">Expo / React Native</text>
+
+              <rect class="d-box" x="20" y="90" width="150" height="46" rx="5"/>
+              <text class="d-lbl" x="34" y="112">Student portal</text>
+              <text class="d-sub" x="34" y="127">Next.js</text>
+
+              <rect class="d-box" x="20" y="150" width="150" height="46" rx="5"/>
+              <text class="d-lbl" x="34" y="172">Super-admin</text>
+              <text class="d-sub" x="34" y="187">Next.js</text>
+
+              <rect class="d-box" x="20" y="210" width="150" height="46" rx="5"/>
+              <text class="d-lbl" x="34" y="232">Marketing site</text>
+              <text class="d-sub" x="34" y="247">Next.js</text>
+            </g>
+
+            <!-- supabase platform -->
+            <rect class="d-box-a" x="270" y="20" width="230" height="300" rx="7"/>
+            <text class="d-lbl" x="286" y="42" style="font-weight:600">Supabase project</text>
+
+            <rect class="d-box" x="286" y="58" width="198" height="44" rx="4"/>
+            <text class="d-lbl" x="298" y="78">Postgres + RLS</text>
+            <text class="d-sub" x="298" y="93">~46 tables, policies</text>
+
+            <rect class="d-box" x="286" y="112" width="198" height="44" rx="4"/>
+            <text class="d-lbl" x="298" y="132">PostgREST</text>
+            <text class="d-sub" x="298" y="147">auto REST for reads</text>
+
+            <rect class="d-box" x="286" y="166" width="198" height="44" rx="4"/>
+            <text class="d-lbl" x="298" y="186">Edge Functions</text>
+            <text class="d-sub" x="298" y="201">~70 · Deno · service role</text>
+
+            <rect class="d-box" x="286" y="220" width="198" height="44" rx="4"/>
+            <text class="d-lbl" x="298" y="240">Auth + JWT hook</text>
+            <text class="d-sub" x="298" y="255">role claim</text>
+
+            <rect class="d-box" x="286" y="274" width="198" height="36" rx="4"/>
+            <text class="d-lbl" x="298" y="296">Vault</text>
+
+            <!-- externals -->
+            <g>
+              <rect class="d-box" x="570" y="40" width="132" height="38" rx="5"/>
+              <text class="d-lbl" x="583" y="63">Stripe</text>
+              <rect class="d-box" x="570" y="90" width="132" height="38" rx="5"/>
+              <text class="d-lbl" x="583" y="113">SMS (Notify.lk)</text>
+              <rect class="d-box" x="570" y="140" width="132" height="38" rx="5"/>
+              <text class="d-lbl" x="583" y="163">Expo Push</text>
+              <rect class="d-box" x="570" y="190" width="132" height="38" rx="5"/>
+              <text class="d-lbl" x="583" y="213">Web Push (VAPID)</text>
+              <rect class="d-box" x="570" y="240" width="132" height="38" rx="5"/>
+              <text class="d-lbl" x="583" y="263">Cloudflare R2</text>
+            </g>
+
+            <!-- flows -->
+            <path class="d-flow" d="M170 53 H230 V120 H286"/>
+            <path class="d-flow" d="M170 113 H250 V134 H286"/>
+            <path class="d-flow" d="M170 173 H240 V188 H286"/>
+            <path class="d-flow" d="M170 233 H236"/>
+            <path class="d-flow-a" d="M484 188 H570 V59"/>
+            <path class="d-flow-a" d="M484 188 H540 V109 H570"/>
+            <path class="d-flow-a" d="M484 188 H528 V159 H570"/>
+            <path class="d-flow-w" d="M484 300 H552 V209 H570"/>
+            <path class="d-flow" d="M484 80 H620 V60" opacity="0"/>
+
+            <text class="d-note" x="20" y="300">Offline-first · local SQLite</text>
+            <text class="d-note" x="20" y="316">on the teacher app (see §08)</text>
+            <text class="d-note" x="270" y="345">Reads: client → PostgREST → RLS → Postgres</text>
+            <text class="d-note" x="270" y="361">Trusted writes: client → Edge Function → Postgres</text>
+            <text class="d-note" x="270" y="377">Outbound: functions call Stripe / SMS / Push / R2</text>
+          </svg>
+        </div>
+        <figcaption><b>Figure 1.</b> One Supabase project is the entire backend. Every client points at it; all outbound integrations are called from Edge Functions.</figcaption>
+      </figure>
+    </section>
+
+    <!-- 02 ---------------------------------------------------------------- -->
+    <section id="clients">
+      <div class="sh"><span class="n">02</span><h2>The four clients</h2></div>
+      <p>Each client is a separate codebase with its own deploy pipeline. They share nothing at runtime except the database and a small package of TypeScript types.</p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Client</th><th>Stack</th><th>Users</th><th>Notable traits</th></tr></thead>
+          <tbody>
+            <tr><td>Teacher app</td><td class="mono">Expo, React Native, expo-router, Drizzle + expo-sqlite</td><td>Tuition teachers &amp; their assistants</td><td>Offline-first; local database; background sync; encrypted backups; QR attendance; OTA updates via EAS</td></tr>
+            <tr><td>Student portal</td><td class="mono">Next.js App Router, Tailwind</td><td>Students</td><td>Account login; sees class, fees, notes, exams; web push; installable PWA</td></tr>
+            <tr><td>Super-admin</td><td class="mono">Next.js, TanStack Query, Recharts, shadcn/ui, Stripe</td><td>Me (platform operator)</td><td>Teacher account lifecycle, subscription plans, KPIs, revenue charts, website CMS, system alerts</td></tr>
+            <tr><td>Marketing site</td><td class="mono">Next.js</td><td>Public</td><td>Static content; reads one <code>app_settings</code> row for the live APK link</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 03 ---------------------------------------------------------------- -->
+    <section id="supabase">
+      <div class="sh"><span class="n">03</span><h2>The Supabase backend</h2></div>
+      <p>Supabase bundles the pieces a backend needs into one managed project. I use four of them:</p>
+      <ul>
+        <li><strong>Postgres</strong> — the single source of truth. ~46 tables, ~84 migrations. All business rules that must not be bypassed live here as constraints, triggers, and RLS policies.</li>
+        <li><strong>PostgREST</strong> — an auto-generated REST API over the database. Clients read (and do simple writes) through it. Every request runs as the calling user, so <strong>RLS decides what comes back</strong>.</li>
+        <li><strong>Edge Functions</strong> — Deno functions with access to the <code>service_role</code> key. Anything requiring a secret, a third-party call, or a check the client cannot be trusted to do runs here (~70 functions).</li>
+        <li><strong>Auth + Vault</strong> — Supabase Auth issues JWTs; a custom hook adds a <code>role</code> claim; Vault stores the one server secret a database trigger needs.</li>
+      </ul>
+      <div class="note">
+        <span class="k">Design rule</span>
+        If a rule can be expressed as an RLS policy or a database constraint, it goes in the database — not in app code, which any of four clients could implement inconsistently or forget.
+      </div>
+    </section>
+
+    <!-- 04 ---------------------------------------------------------------- -->
+    <section id="identity">
+      <div class="sh"><span class="n">04</span><h2>Identity &amp; roles</h2></div>
+      <p>There are four kinds of user: <span class="mono">super_admin</span>, <span class="mono">teacher</span>, <span class="mono">assistant</span>, <span class="mono">student</span>. Supabase Auth only knows "authenticated" — the domain role is layered on top.</p>
+      <p>A <code>user_roles</code> table maps each auth user to exactly one role. On every token issue or refresh, the <code>custom_access_token_hook</code> reads that row and injects a <code>role</code> claim into the JWT. RLS policies then branch on that claim — <code>is_super_admin()</code>, <code>is_teacher()</code>, and so on — without another database round-trip.</p>
+
+      <figure>
+        <div class="diagram">
+          <svg viewBox="0 0 720 250" role="img" aria-label="Identity and role-claim flow">
+            <rect class="d-box" x="20" y="90" width="140" height="50" rx="5"/>
+            <text class="d-lbl" x="34" y="112">auth.users</text>
+            <text class="d-sub" x="34" y="128">Supabase Auth</text>
+
+            <rect class="d-box" x="210" y="90" width="150" height="50" rx="5"/>
+            <text class="d-lbl" x="224" y="112">user_roles</text>
+            <text class="d-sub" x="224" y="128">one role per user</text>
+
+            <rect class="d-box-a" x="410" y="80" width="170" height="70" rx="5"/>
+            <text class="d-lbl" x="424" y="104">custom_access_</text>
+            <text class="d-lbl" x="424" y="120">token_hook</text>
+            <text class="d-sub" x="424" y="137">adds role claim to JWT</text>
+
+            <rect class="d-box" x="410" y="185" width="290" height="46" rx="5"/>
+            <text class="d-lbl" x="424" y="207">RLS policies branch on the claim</text>
+            <text class="d-sub" x="424" y="222">is_super_admin() · is_teacher() · is_assistant() · student self</text>
+
+            <path class="d-flow" d="M160 115 H210"/>
+            <path class="d-flow-a" d="M360 115 H410"/>
+            <path class="d-flow-a" d="M495 150 V185"/>
+            <text class="d-note" x="20" y="175">Token issued / refreshed</text>
+          </svg>
+        </div>
+        <figcaption><b>Figure 2.</b> The role lives in the JWT, so authorization is a claim check, not a query.</figcaption>
+      </figure>
+
+      <div class="tw">
+        <table>
+          <thead><tr><th>Role</th><th>Gets in via</th><th>Can see</th></tr></thead>
+          <tbody>
+            <tr><td>super_admin</td><td class="mono">email + password</td><td>Everything — platform-wide, for operations</td></tr>
+            <tr><td>teacher</td><td class="mono">phone OTP self-registration</td><td>Only their own classes, students, payments, exams</td></tr>
+            <tr><td>assistant</td><td class="mono">created by a teacher</td><td>A teacher's data, scoped by <code>assistant_class_permissions</code></td></tr>
+            <tr><td>student</td><td class="mono">account + class join request</td><td>Only their own row and the classes they belong to</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 05 ---------------------------------------------------------------- -->
+    <section id="readwrite">
+      <div class="sh"><span class="n">05</span><h2>The read / write split</h2></div>
+      <p>This is the single most important idea in the architecture.</p>
+      <h3>Reads — straight through, guarded by RLS</h3>
+      <p>A client asks PostgREST for rows. The request carries the user's JWT. Postgres applies the RLS policies for that user's role and returns only permitted rows. The client cannot ask for more than it is allowed; there is no server code to bypass because the rule is in the database.</p>
+      <h3>Writes that need trust — behind an Edge Function</h3>
+      <p>Creating a teacher, verifying an OTP, charging a card, sending an SMS, opening or grading an exam: these run in an Edge Function holding the <code>service_role</code> key. The function authenticates the caller, runs its own checks, performs the write, and returns a result. The privileged key never leaves the server.</p>
+
+      <figure>
+        <div class="diagram">
+          <svg viewBox="0 0 720 260" role="img" aria-label="Read path versus write path">
+            <text class="d-sub" x="20" y="24" style="font-size:11px">READ PATH</text>
+            <rect class="d-box" x="20" y="34" width="120" height="42" rx="5"/>
+            <text class="d-lbl" x="32" y="60">Client</text>
+            <rect class="d-box" x="200" y="34" width="120" height="42" rx="5"/>
+            <text class="d-lbl" x="212" y="60">PostgREST</text>
+            <rect class="d-box-a" x="380" y="34" width="120" height="42" rx="5"/>
+            <text class="d-lbl" x="392" y="56">RLS check</text>
+            <rect class="d-box" x="560" y="34" width="120" height="42" rx="5"/>
+            <text class="d-lbl" x="572" y="60">Postgres</text>
+            <path class="d-flow" d="M140 55 H200"/>
+            <path class="d-flow-a" d="M320 55 H380"/>
+            <path class="d-flow-a" d="M500 55 H560"/>
+            <text class="d-note" x="200" y="96">JWT carries role claim → policy returns only allowed rows</text>
+
+            <text class="d-sub" x="20" y="150" style="font-size:11px">TRUSTED WRITE PATH</text>
+            <rect class="d-box" x="20" y="160" width="120" height="42" rx="5"/>
+            <text class="d-lbl" x="32" y="186">Client</text>
+            <rect class="d-box-a" x="200" y="150" width="150" height="62" rx="5"/>
+            <text class="d-lbl" x="212" y="174">Edge Function</text>
+            <text class="d-sub" x="212" y="190">verify caller</text>
+            <text class="d-sub" x="212" y="203">+ own checks</text>
+            <rect class="d-box" x="410" y="160" width="150" height="42" rx="5"/>
+            <text class="d-lbl" x="422" y="186">service_role write</text>
+            <rect class="d-box" x="620" y="160" width="80" height="42" rx="5"/>
+            <text class="d-lbl" x="632" y="186">Postgres</text>
+            <path class="d-flow" d="M140 181 H200"/>
+            <path class="d-flow-a" d="M350 181 H410"/>
+            <path class="d-flow-a" d="M560 181 H620"/>
+            <text class="d-note" x="200" y="238">Secret key stays server-side · rate limits &amp; OTP checks enforced here</text>
+          </svg>
+        </div>
+        <figcaption><b>Figure 3.</b> Dumb reads guarded by the database; sensitive writes gated by a function.</figcaption>
+      </figure>
+    </section>
+
+    <!-- 06 ---------------------------------------------------------------- -->
+    <section id="data">
+      <div class="sh"><span class="n">06</span><h2>The data model</h2></div>
+      <p>Roughly 46 tables, grown over 84 migrations. Grouped by domain:</p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Domain</th><th>Core tables</th></tr></thead>
+          <tbody>
+            <tr><td>Identity</td><td class="mono">user_roles, teachers, assistants, assistant_class_permissions, students, student_credentials, teacher_sessions</td></tr>
+            <tr><td>Classes</td><td class="mono">classes, student_classes, class_join_requests, extra_classes, class schedule (per-day)</td></tr>
+            <tr><td>Money</td><td class="mono">payments, payment_collections, payment_corrections, payment_receipts, subscriptions, subscription_plans, subscription_events</td></tr>
+            <tr><td>Teaching</td><td class="mono">attendance, notes, note_files, marks, exams, student_submissions, question_bank</td></tr>
+            <tr><td>Online exams</td><td class="mono">online_exams, online_exam_questions, online_exam_attempts, online_exam_answers, online_exam_events</td></tr>
+            <tr><td>Messaging</td><td class="mono">messages, message_templates, chat_threads, chat_messages, notifications, student_notifications</td></tr>
+            <tr><td>Push</td><td class="mono">push_tokens, student_push_subscriptions</td></tr>
+            <tr><td>Trust &amp; limits</td><td class="mono">device_trials, login_attempts, teacher_registration_otps, student_register_otps, password_reset_otps, phone_change_otps, duplicate_token_attempts</td></tr>
+            <tr><td>Ops</td><td class="mono">audit_logs, analytics_events, system_alerts, app_settings, app_private_settings, sync_state, reminder_dispatch_log</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Every table has RLS enabled. Most have an <code>updated_at</code> trigger; money and identity tables also have audit triggers writing to <code>audit_logs</code>.</p>
+    </section>
+
+    <!-- 07 ---------------------------------------------------------------- -->
+    <section id="functions">
+      <div class="sh"><span class="n">07</span><h2>Edge functions</h2></div>
+      <p>About 70 Deno functions. They fall into a handful of groups:</p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Group</th><th>Examples</th><th>Why a function</th></tr></thead>
+          <tbody>
+            <tr><td>Registration &amp; auth</td><td class="mono">register_teacher_request/confirm, login_teacher, student_register_*, activate_teacher</td><td>OTP generation/verification, uniqueness checks, session issuing</td></tr>
+            <tr><td>Account changes</td><td class="mono">request/confirm_phone_change, *_password_reset_otp, reset_teacher_device</td><td>Rate-limited, OTP-gated, service-role writes to <code>auth</code></td></tr>
+            <tr><td>Class membership</td><td class="mono">get_class_by_code, request_join_class, respond_join_request, unlink_class</td><td>Cross-tenant reads that RLS would otherwise block</td></tr>
+            <tr><td>Payments</td><td class="mono">create_checkout_session, stripe_webhook, checkout_result, cancel/reactivate_subscription, get_invoices</td><td>Stripe secret key; webhook signature verification</td></tr>
+            <tr><td>Notifications</td><td class="mono">dispatch_push, dispatch_student_push, dispatch_reminders, send_sms, save_student_push_subscription</td><td>Provider credentials; fan-out; scheduled</td></tr>
+            <tr><td>Online exams</td><td class="mono">start_online_exam, submit_online_exam, log_exam_event, get_student_online_exams</td><td>Server-authoritative timing, grading, anti-cheat logging</td></tr>
+            <tr><td>Student portal reads</td><td class="mono">get_student_payments/notes/exams/notifications, student_chat</td><td>Shaped, joined responses for a low-trust client</td></tr>
+            <tr><td>Ops</td><td class="mono">health_check, log_audit, stripe_config_status</td><td>Monitoring and diagnostics</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 08 ---------------------------------------------------------------- -->
+    <section id="offline">
+      <div class="sh"><span class="n">08</span><h2>Offline sync (teacher app)</h2></div>
+      <p>Teachers use the app in classrooms with poor connectivity, so it is <strong>offline-first</strong>: the UI never waits on the network.</p>
+      <ul>
+        <li>The phone holds its own <strong>SQLite database</strong> (Drizzle ORM, its own migration chain).</li>
+        <li>Every screen reads and writes <strong>local rows only</strong> — instant, works with no signal.</li>
+        <li>A <strong>sync engine</strong> with three parts — <code>queue</code>, <code>push</code>, <code>pull</code> — reconciles local and server state in the background.</li>
+        <li>It is <strong>event-driven</strong>: each local write calls <code>scheduleSync()</code>, debounced. A 5-minute foreground timer is only a backstop.</li>
+        <li>Pushes use Postgres <strong>upsert with primary-key conflict resolution</strong> (<code>merge-duplicates</code>), so replaying the same change is harmless — the sync is idempotent.</li>
+        <li>Auth tokens refresh proactively (5-minute buffer); an expired session surfaces a single clear "log in again".</li>
+        <li>Separately, the app writes <strong>AES-GCM encrypted backups</strong> (derived key) so a teacher can restore onto a new phone.</li>
+      </ul>
+
+      <figure>
+        <div class="diagram">
+          <svg viewBox="0 0 720 300" role="img" aria-label="Offline sync engine">
+            <rect class="d-box" x="20" y="40" width="180" height="120" rx="6"/>
+            <text class="d-lbl" x="34" y="62" style="font-weight:600">Phone</text>
+            <rect class="d-box" x="36" y="74" width="148" height="34" rx="4"/>
+            <text class="d-lbl" x="46" y="95">UI reads/writes local</text>
+            <rect class="d-box" x="36" y="116" width="148" height="34" rx="4"/>
+            <text class="d-lbl" x="46" y="137">SQLite (Drizzle)</text>
+
+            <rect class="d-box-a" x="270" y="40" width="180" height="150" rx="6"/>
+            <text class="d-lbl" x="284" y="62" style="font-weight:600">Sync engine</text>
+            <rect class="d-box" x="286" y="74" width="148" height="30" rx="4"/>
+            <text class="d-lbl" x="296" y="94">queue — pending changes</text>
+            <rect class="d-box" x="286" y="110" width="148" height="30" rx="4"/>
+            <text class="d-lbl" x="296" y="130">push — upsert to server</text>
+            <rect class="d-box" x="286" y="146" width="148" height="30" rx="4"/>
+            <text class="d-lbl" x="296" y="166">pull — changed rows down</text>
+
+            <rect class="d-box" x="520" y="60" width="170" height="90" rx="6"/>
+            <text class="d-lbl" x="534" y="82" style="font-weight:600">Supabase</text>
+            <text class="d-lbl" x="534" y="104">Postgres</text>
+            <text class="d-sub" x="534" y="122">sync_state watermark</text>
+            <text class="d-sub" x="534" y="137">RLS per teacher</text>
+
+            <path class="d-flow-a" d="M200 100 H270"/>
+            <path class="d-flow-a" d="M450 115 H520" />
+            <path class="d-flow-w" d="M520 135 H470 V175 H236 V160" />
+            <text class="d-note" x="20" y="205">Trigger: every local write → scheduleSync() (debounced)</text>
+            <text class="d-note" x="20" y="223">Backstop: 5-min foreground timer</text>
+            <text class="d-note" x="20" y="241">Idempotent: primary-key conflict = merge-duplicates</text>
+            <text class="d-note" x="20" y="259">Offline: local SQLite is the source of truth</text>
+          </svg>
+        </div>
+        <figcaption><b>Figure 4.</b> The network is a background reconciler, never something the user waits for.</figcaption>
+      </figure>
+    </section>
+
+    <!-- 09 ---------------------------------------------------------------- -->
+    <section id="notify">
+      <div class="sh"><span class="n">09</span><h2>Notifications</h2></div>
+      <p>Two channels: <strong>Expo Push</strong> for the teacher app, <strong>Web Push (VAPID)</strong> for the student PWA. Some notifications originate from a database change (a payment recorded, a join request answered), so the trigger that fires them needs to authenticate to an Edge Function — which means it needs the <code>service_role</code> key.</p>
+      <p>Supabase's managed <code>postgres</code> role cannot hold custom settings, so the key is stored in <strong>Vault</strong> and read at trigger time via <code>vault.decrypted_secrets</code>. The whole path is best-effort: if the key is missing or <code>pg_net</code> is unavailable, the in-app notification row is still saved and the caller's transaction still commits.</p>
+
+      <figure>
+        <div class="diagram">
+          <svg viewBox="0 0 720 220" role="img" aria-label="Notification dispatch path">
+            <rect class="d-box" x="20" y="80" width="140" height="46" rx="5"/>
+            <text class="d-lbl" x="32" y="102">Row change</text>
+            <text class="d-sub" x="32" y="117">payment, join, …</text>
+            <rect class="d-box-a" x="200" y="70" width="150" height="66" rx="5"/>
+            <text class="d-lbl" x="212" y="92">DB trigger</text>
+            <text class="d-sub" x="212" y="108">reads key from Vault</text>
+            <text class="d-sub" x="212" y="122">pg_net → function</text>
+            <rect class="d-box" x="390" y="80" width="150" height="46" rx="5"/>
+            <text class="d-lbl" x="402" y="102">dispatch_push</text>
+            <text class="d-sub" x="402" y="117">fan-out</text>
+            <rect class="d-box" x="580" y="45" width="120" height="40" rx="5"/>
+            <text class="d-lbl" x="592" y="69">Expo Push</text>
+            <rect class="d-box" x="580" y="120" width="120" height="40" rx="5"/>
+            <text class="d-lbl" x="592" y="144">Web Push</text>
+            <path class="d-flow" d="M160 103 H200"/>
+            <path class="d-flow-a" d="M350 103 H390"/>
+            <path class="d-flow-a" d="M540 103 H560 V65 H580"/>
+            <path class="d-flow-a" d="M540 103 H560 V140 H580"/>
+            <text class="d-note" x="20" y="185">Best-effort: missing key never rolls back the caller's transaction</text>
+          </svg>
+        </div>
+        <figcaption><b>Figure 5.</b> A database change can send a push without any client involved — and never breaks the write if it can't.</figcaption>
+      </figure>
+    </section>
+
+    <!-- 10 ---------------------------------------------------------------- -->
+    <section id="payments">
+      <div class="sh"><span class="n">10</span><h2>Payments &amp; subscriptions</h2></div>
+      <p>Teachers pay a subscription to unlock Pro features. Stripe Checkout handles the card; the platform never sees card data.</p>
+      <ol>
+        <li><code>create_checkout_session</code> makes a Stripe session and returns its URL.</li>
+        <li>The teacher pays on Stripe's hosted page.</li>
+        <li>Stripe calls <code>stripe_webhook</code>; the function <strong>verifies the signature</strong>, then updates <code>subscriptions</code> and appends to <code>subscription_events</code>.</li>
+        <li>Pro entitlement is enforced <strong>server-side</strong> — RLS and function checks read the subscription row, so a patched client cannot unlock anything.</li>
+      </ol>
+      <div class="note">
+        <span class="k">Not in the repo</span>
+        No card numbers, no Stripe secret key, no webhook secret. Those live only in environment variables on the server. The open-source repo ships empty <code>.env.example</code> templates.
+      </div>
+    </section>
+
+    <!-- 11 ---------------------------------------------------------------- -->
+    <section id="exam">
+      <div class="sh"><span class="n">11</span><h2>Online exams</h2></div>
+      <p>A phased MCQ exam with a join code and anti-cheat logging. The server owns the clock and the answer key.</p>
+
+      <figure>
+        <div class="diagram">
+          <svg viewBox="0 0 720 150" role="img" aria-label="Online exam state flow">
+            <rect class="d-box" x="14" y="50" width="110" height="44" rx="5"/>
+            <text class="d-lbl" x="26" y="70">draft</text>
+            <text class="d-sub" x="26" y="85">questions set</text>
+            <rect class="d-box-a" x="164" y="50" width="110" height="44" rx="5"/>
+            <text class="d-lbl" x="176" y="70">open</text>
+            <text class="d-sub" x="176" y="85">join code live</text>
+            <rect class="d-box-a" x="314" y="50" width="120" height="44" rx="5"/>
+            <text class="d-lbl" x="326" y="70">in progress</text>
+            <text class="d-sub" x="326" y="85">events logged</text>
+            <rect class="d-box" x="474" y="50" width="110" height="44" rx="5"/>
+            <text class="d-lbl" x="486" y="70">submitted</text>
+            <rect class="d-box" x="624" y="50" width="80" height="44" rx="5"/>
+            <text class="d-lbl" x="636" y="74">graded</text>
+            <path class="d-flow-a" d="M124 72 H164"/>
+            <path class="d-flow-a" d="M274 72 H314"/>
+            <path class="d-flow-a" d="M434 72 H474"/>
+            <path class="d-flow-a" d="M584 72 H624"/>
+            <text class="d-note" x="314" y="120">tab switch / focus loss → online_exam_events (audit)</text>
+          </svg>
+        </div>
+        <figcaption><b>Figure 6.</b> <code>start_online_exam</code> opens it, <code>log_exam_event</code> records behaviour, <code>submit_online_exam</code> closes and scores it.</figcaption>
+      </figure>
+    </section>
+
+    <!-- 12 ---------------------------------------------------------------- -->
+    <section id="env">
+      <div class="sh"><span class="n">12</span><h2>Environments &amp; delivery</h2></div>
+      <div class="tw">
+        <table>
+          <thead><tr><th></th><th>Dev</th><th>Prod</th></tr></thead>
+          <tbody>
+            <tr><td>Supabase project</td><td class="mono">easyclz-dev</td><td class="mono">ClassPay (live)</td></tr>
+            <tr><td>Stripe</td><td>test mode</td><td>live mode</td></tr>
+            <tr><td>SMS</td><td>demo sender</td><td>live sender</td></tr>
+            <tr><td>Web apps</td><td colspan="2">Vercel — preview deploys on push, prod on <code>main</code></td></tr>
+            <tr><td>Teacher app</td><td colspan="2">EAS build + OTA updates (expo-updates)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>One shell command — <code>./use-env.sh dev</code> or <code>./use-env.sh prod</code> — rewrites every app's local env so the whole machine switches targets at once. Database changes are plain SQL migration files applied with the Supabase CLI.</p>
+    </section>
+
+    <!-- 13 ---------------------------------------------------------------- -->
+    <section id="security">
+      <div class="sh"><span class="n">13</span><h2>Security model, in one list</h2></div>
+      <ul>
+        <li><strong>RLS on every table.</strong> The database is the last line of defence; a bug in a client cannot leak another tenant's data.</li>
+        <li><strong>Role in the JWT.</strong> Authorization is a signed claim check, set by a hook, not a value the client sends.</li>
+        <li><strong>Secrets only server-side.</strong> <code>service_role</code> key, Stripe keys, SMS keys — environment variables and Vault, never the repo, never a client bundle.</li>
+        <li><strong>Public by design vs. secret.</strong> The Supabase anon key ships in every client and is meant to — it only permits what RLS already allows.</li>
+        <li><strong>Rate limits &amp; OTPs</strong> for every account-changing action, enforced in Edge Functions with dedicated tables (<code>login_attempts</code>, <code>*_otps</code>, <code>change_rate_limits</code>).</li>
+        <li><strong>Device-aware trials</strong> (<code>device_trials</code>) so a new account on a used phone gets no fresh trial.</li>
+        <li><strong>Audit triggers</strong> on money and identity tables.</li>
+        <li><strong>Encrypted local backups</strong> (AES-GCM) on the teacher app.</li>
+      </ul>
+    </section>
+
+    <!-- 14 ---------------------------------------------------------------- -->
+    <section id="screens">
+      <div class="sh"><span class="n">14</span><h2>Screens</h2></div>
+      <p>Screenshots of the running system. <em>(Placeholders — drop images in and replace the caption.)</em></p>
+
+      <!-- To add a screenshot: replace the whole <div class="shot">…</div> with:
+           <img src="images/your-file.png" alt="describe it" />
+           Put the file in docs/images/ in the repo. -->
+
+      <figure>
+        <div class="shot">
+          <span class="lab">SCREENSHOT — Teacher app · Home / dashboard</span>
+          <span class="hint">Class list, today's schedule, quick actions. Replace this box with <code>&lt;img src="images/teacher-home.png"&gt;</code>.</span>
+        </div>
+        <figcaption><b>Figure 7.</b> Teacher app — daily home screen.</figcaption>
+      </figure>
+
+      <figure>
+        <div class="shot">
+          <span class="lab">SCREENSHOT — Teacher app · Attendance (manual + QR)</span>
+          <span class="hint">Marking attendance inside the class time window. Replace with <code>&lt;img src="images/attendance.png"&gt;</code>.</span>
+        </div>
+        <figcaption><b>Figure 8.</b> Attendance, constrained to the scheduled day and window.</figcaption>
+      </figure>
+
+      <figure>
+        <div class="shot">
+          <span class="lab">SCREENSHOT — Student portal · Class overview</span>
+          <span class="hint">Fees, notes, exams as the student sees them. Replace with <code>&lt;img src="images/student-portal.png"&gt;</code>.</span>
+        </div>
+        <figcaption><b>Figure 9.</b> Student portal.</figcaption>
+      </figure>
+
+      <figure>
+        <div class="shot">
+          <span class="lab">SCREENSHOT — Super-admin · KPIs &amp; revenue</span>
+          <span class="hint">Recharts dashboard: active teachers, MRR, SMS cost. Replace with <code>&lt;img src="images/admin-dashboard.png"&gt;</code>.</span>
+        </div>
+        <figcaption><b>Figure 10.</b> Operator dashboard.</figcaption>
+      </figure>
+
+      <figure>
+        <div class="shot">
+          <span class="lab">SCREENSHOT — Online exam · Student view</span>
+          <span class="hint">Join-code entry and the MCQ screen. Replace with <code>&lt;img src="images/online-exam.png"&gt;</code>.</span>
+        </div>
+        <figcaption><b>Figure 11.</b> Online exam, student side.</figcaption>
+      </figure>
+
+      <figure>
+        <div class="shot">
+          <span class="lab">SCREENSHOT — Database schema (your ERD)</span>
+          <span class="hint">Export from Supabase Studio or dbdiagram. Replace with <code>&lt;img src="images/erd.png"&gt;</code>.</span>
+        </div>
+        <figcaption><b>Figure 12.</b> Full entity-relationship diagram.</figcaption>
+      </figure>
+    </section>
+
+    <footer>
+      ClassS / Easyclz · architecture &amp; technical plan · <a href="https://github.com/hashanCB/Easyclzcom-">github.com/hashanCB/Easyclzcom-</a>
+    </footer>
+  </main>
+</div>
