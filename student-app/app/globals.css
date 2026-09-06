@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background:     210 40% 98%;
+    --foreground:     222 47% 11%;
+    --card:           0 0% 100%;
+    --card-foreground:222 47% 11%;
+    --primary:        224 76% 48%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light:  224 76% 94%;
+    --muted:          210 40% 96%;
+    --muted-foreground:215 16% 47%;
+    --border:         214 32% 91%;
+    --success:        142 76% 36%;
+    --success-light:  142 76% 94%;
+    --danger:         0 72% 51%;
+    --danger-light:   0 72% 95%;
+    --warning:        38 92% 50%;
+    --warning-light:  38 92% 95%;
+    --radius:         0.75rem;
+  }
+
+  .dark {
+    --background:     222 47% 11%;
+    --foreground:     210 40% 98%;
+    --card:           222 44% 15%;
+    --card-foreground:210 40% 98%;
+    --primary:        217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light:  224 50% 20%;
+    --muted:          217 33% 20%;
+    --muted-foreground:215 20% 70%;
+    --border:         217 33% 26%;
+    --success:        142 70% 45%;
+    --success-light:  142 50% 15%;
+    --danger:         0 72% 60%;
+    --danger-light:   0 50% 20%;
+    --warning:        38 92% 50%;
+    --warning-light:  38 50% 20%;
+  }
+
+  * {
+    @apply border-border;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  input, button, select, textarea {
+    font-family: inherit;
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+}

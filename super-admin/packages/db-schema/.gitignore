@@ -1,0 +1,8 @@
+# Supabase local artifacts
+.branches
+.temp
+supabase/.branches
+supabase/.temp
+
+# Generated types (regenerate with `pnpm gen:types`)
+src/database.types.ts

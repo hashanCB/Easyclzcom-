@@ -1,0 +1,10 @@
+export { classesRepo } from './classesRepo';
+export { studentsRepo } from './studentsRepo';
+export { paymentsRepo } from './paymentsRepo';
+export { paymentCorrectionsRepo } from './paymentCorrectionsRepo';
+export { attendanceRepo } from './attendanceRepo';
+export { notesRepo } from './notesRepo';
+export { noteFilesRepo } from './noteFilesRepo';
+export { messageTemplatesRepo } from './messageTemplatesRepo';
+export { examsRepo } from './examsRepo';
+export { marksRepo } from './marksRepo';

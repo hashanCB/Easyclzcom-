@@ -1,0 +1,6 @@
+{
+  "installCommand": "NPM_CONFIG_NODE_LINKER=isolated pnpm install --frozen-lockfile --config.node-linker=isolated",
+  "buildCommand": "pnpm build",
+  "outputDirectory": ".next",
+  "framework": "nextjs"
+}

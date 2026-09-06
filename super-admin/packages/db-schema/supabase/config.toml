@@ -1,0 +1,199 @@
+# Supabase local config for the teacher-class-management project.
+# Reference: https://supabase.com/docs/guides/local-development/cli/config
+
+project_id = "teacher-class-management"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[db.pooler]
+enabled = false
+port = 54329
+pool_mode = "transaction"
+default_pool_size = 20
+max_client_conn = 100
+
+[realtime]
+enabled = true
+
+[studio]
+enabled = true
+port = 54323
+api_url = "http://127.0.0.1"
+
+[inbucket]
+enabled = true
+port = 54324
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+
+[auth]
+enabled = true
+site_url = "http://127.0.0.1:3000"
+additional_redirect_urls = ["https://127.0.0.1:3000"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+refresh_token_reuse_interval = 10
+# Public signup endpoint is intentionally left enabled so the GoTrue email
+# provider works for login. Account creation in this app never happens via the
+# public signup endpoint — every user is provisioned via edge functions
+# (create_teacher in U07; create_student / create_assistant in later units).
+enable_signup = true
+enable_anonymous_sign_ins = false
+enable_manual_linking = false
+
+[auth.email]
+# In CLI v1.x, [auth.email] enable_signup also gates the email provider
+# itself (GOTRUE_EXTERNAL_EMAIL_ENABLED). Setting it to true here is
+# required for password sign-in to work at all. Public abuse of the signup
+# endpoint is prevented by routing — no client app calls POST /auth/v1/signup;
+# every account is created via auth.admin.createUser inside an edge function.
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+secure_password_change = true
+max_frequency = "1s"
+otp_length = 6
+otp_expiry = 3600
+
+[auth.sms]
+enable_signup = false
+enable_confirmations = false
+
+# Custom JWT access-token hook — adds the `role` claim
+# (super_admin | teacher | assistant | student) to every issued token.
+# The hook function `public.custom_access_token_hook` is created in U06 migrations.
+[auth.hook.custom_access_token]
+enabled = true
+uri = "pg-functions://postgres/public/custom_access_token_hook"
+
+[edge_runtime]
+enabled = true
+policy = "oneshot"
+inspector_port = 8083
+
+# Public / student-JWT endpoints — no Supabase JWT required (custom token is the auth).
+[functions.student_register]
+verify_jwt = false
+
+[functions.student_register_request]
+verify_jwt = false
+
+[functions.student_register_confirm]
+verify_jwt = false
+
+[functions.student_global_login]
+verify_jwt = false
+
+[functions.student_refresh_session]
+verify_jwt = false
+
+[functions.update_student_name]
+verify_jwt = false
+
+[functions.request_phone_change]
+verify_jwt = false
+
+[functions.confirm_phone_change]
+verify_jwt = false
+
+[functions.change_student_password]
+verify_jwt = false
+
+[functions.get_student_payments]
+verify_jwt = false
+
+[functions.get_student_exams]
+verify_jwt = false
+
+[functions.get_student_notes]
+verify_jwt = false
+
+[functions.get_student_file_url]
+verify_jwt = false
+
+[functions.student_chat]
+verify_jwt = false
+
+[functions.request_password_reset_otp]
+verify_jwt = false
+
+[functions.confirm_password_reset]
+verify_jwt = false
+
+# Public teacher self-service password reset (phone-OTP verified) — no JWT.
+[functions.request_teacher_password_reset_otp]
+verify_jwt = false
+
+[functions.verify_teacher_password_reset_otp]
+verify_jwt = false
+
+[functions.confirm_teacher_password_reset]
+verify_jwt = false
+
+[functions.update_student_avatar]
+verify_jwt = false
+
+# Public teacher self-registration (phone-OTP verified) — no Supabase JWT.
+[functions.register_teacher_request]
+verify_jwt = false
+
+[functions.register_teacher_confirm]
+verify_jwt = false
+
+# Invoked by pg_cron via a CRON_SECRET bearer token — not a Supabase JWT.
+[functions.get_student_notifications]
+verify_jwt = false
+
+[functions.mark_student_notifications_read]
+verify_jwt = false
+
+[functions.save_student_push_subscription]
+verify_jwt = false
+
+# Called only by the create_student_notification() DB trigger (pg_net) — auth is
+# the X-Dispatch-Secret header, not a Supabase JWT.
+[functions.dispatch_student_push]
+verify_jwt = false
+
+[functions.get_class_by_code]
+verify_jwt = false
+
+[functions.request_join_class]
+verify_jwt = false
+
+[functions.respond_join_request]
+verify_jwt = false
+
+[functions.my_join_requests]
+verify_jwt = false
+
+[functions.unlink_class]
+verify_jwt = false
+
+[functions.dispatch_reminders]
+verify_jwt = false
+
+# Invoked by the payments_send_receipt DB trigger (pg_net) via a CRON_SECRET
+# bearer token — not a Supabase JWT.
+[functions.send_payment_receipt]
+verify_jwt = false
+
+# Called by Stripe, which cannot send a Supabase JWT. The function instead
+# verifies the Stripe signature internally using the webhook signing secret.
+[functions.stripe_webhook]
+verify_jwt = false
+
+[analytics]
+enabled = false

@@ -1,0 +1,88 @@
+{
+  "expo": {
+    "name": "Teacher App",
+    "slug": "teacher-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1a56db"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.hashan.teacher",
+      "buildNumber": "1",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1a56db"
+      },
+      "package": "com.hashan.teacher",
+      "versionCode": 2,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to scan student QR codes."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#1a56db",
+          "iosDisplayInForeground": true
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos to set a student profile picture.",
+          "cameraPermission": "Allow $(PRODUCT_NAME) to use the camera to take a student profile picture."
+        }
+      ]
+    ],
+    "scheme": "teacher-app",
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "supabaseUrl": "https://kesssbvejyeefyaqjobk.supabase.co",
+      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtlc3NzYnZlanllZWZ5YXFqb2JrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNTgwOTEsImV4cCI6MjA5MzczNDA5MX0.jVnOSY6LTqbjZ5TpnRq4KS04Zcvo9iSRsLQ8AkeD_rI",
+      "r2WorkerUrl": "https://r2-worker-prod.hashan-chanaka96.workers.dev",
+      "eas": {
+        "projectId": "cbd7bb80-895e-471f-a500-8f1811a3ac9f"
+      },
+      "studentPortalUrl": "https://student.easyclz.com"
+    },
+    "owner": "hashancc2",
+    "updates": {
+      "url": "https://u.expo.dev/cbd7bb80-895e-471f-a500-8f1811a3ac9f",
+      "fallbackToCacheTimeout": 0
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    }
+  }
+}

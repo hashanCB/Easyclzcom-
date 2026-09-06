@@ -1,0 +1,28 @@
+{
+  "name": "@shared/db-schema",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Supabase migrations, seed data, and edge functions for the teacher class management system",
+  "scripts": {
+    "supabase:start": "supabase start",
+    "supabase:stop": "supabase stop",
+    "supabase:status": "supabase status",
+    "supabase:reset": "supabase db reset",
+    "db:diff": "supabase db diff -f",
+    "db:push": "supabase db push",
+    "db:pull": "supabase db pull",
+    "migration:new": "supabase migration new",
+    "migration:list": "supabase migration list",
+    "gen:types": "supabase gen types typescript --local > src/database.types.ts",
+    "fn:deploy": "supabase functions deploy --no-verify-jwt",
+    "fn:deploy:reminders": "supabase functions deploy dispatch_reminders --no-verify-jwt",
+    "fn:deploy:stripe": "supabase functions deploy stripe_webhook --no-verify-jwt",
+    "link": "supabase link",
+    "lint": "echo 'no-op'",
+    "type-check": "echo 'no-op'",
+    "test": "echo 'no-op'"
+  },
+  "devDependencies": {
+    "supabase": "^1.200.0"
+  }
+}

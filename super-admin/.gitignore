@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+build/
+dist/
+
+# Env (keep secrets out of git; use .env.local.example as the template)
+.env
+.env.local
+.env.*.local
+
+# Misc
+.DS_Store
+*.tsbuildinfo
+next-env.d.ts
+
+# Environment switcher files (contain keys — never commit)
+.env.dev
+.env.prod

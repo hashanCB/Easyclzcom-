@@ -1,0 +1,50 @@
+# --- dependencies ---
+node_modules/
+.pnp
+.pnp.js
+
+# --- build output ---
+.next/
+out/
+dist/
+build/
+.expo/
+.expo-shared/
+*.tsbuildinfo
+web-build/
+
+# --- env / secrets (only *.example is allowed through) ---
+.env
+.env.*
+!.env.example
+!.env.local.example
+vercel.env
+
+# --- signing keys / certs ---
+*.keystore
+*.jks
+*.p8
+*.p12
+*.pem
+*.mobileprovision
+google-services.json
+GoogleService-Info.plist
+**/serviceAccount*.json
+
+# --- supabase local ---
+supabase/.branches
+supabase/.temp
+**/supabase/.temp
+**/supabase/.branches
+
+# --- misc ---
+.DS_Store
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+coverage/
+.vscode/
+.idea/
+*.pem
+.turbo

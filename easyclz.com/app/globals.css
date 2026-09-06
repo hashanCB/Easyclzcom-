@@ -1,0 +1,7 @@
+/* output.css loaded via <link> in layout */
+
+html,
+body,
+body * {
+  font-family: 'Open Sans', Helvetica, Arial, sans-serif !important;
+}
