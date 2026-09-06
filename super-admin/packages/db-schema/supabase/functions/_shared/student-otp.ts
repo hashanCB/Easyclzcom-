@@ -19,8 +19,8 @@ export function toLocalLK(phone: string): string {
 /**
  * A format-agnostic key for comparing two phone numbers for "same person".
  * Strips everything but digits and keeps the last 9 (the subscriber part of a
- * Sri Lankan mobile, 7XXXXXXXX), so 0716905898, +94716905898, 94716905898 and
- * "071 690 5898" all collapse to the same key. Used to merge a student's
+ * Sri Lankan mobile, 7XXXXXXXX), so 0771234567, +94771234567, 94771234567 and
+ * "077 123 4567" all collapse to the same key. Used to merge a student's
  * account with a teacher's manually-added record regardless of how the teacher
  * typed the number. Returns '' for numbers with fewer than 9 digits (won't
  * match a real number, avoiding false merges).

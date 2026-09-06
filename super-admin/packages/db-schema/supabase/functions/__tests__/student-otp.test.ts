@@ -21,19 +21,19 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 
 Deno.test('toLocalLK: converts +94 international to 07 local', () => {
-  assertEquals(toLocalLK('+94716905898'), '0716905898');
+  assertEquals(toLocalLK('+94771234567'), '0771234567');
   assertEquals(toLocalLK('+94771234567'), '0771234567');
   assertEquals(toLocalLK('+94712345678'), '0712345678');
 });
 
 Deno.test('toLocalLK: leaves already-local 07XXXXXXXXX unchanged', () => {
-  assertEquals(toLocalLK('0716905898'), '0716905898');
+  assertEquals(toLocalLK('0771234567'), '0771234567');
   assertEquals(toLocalLK('0771234567'), '0771234567');
 });
 
 Deno.test('toLocalLK: handles +94 with spaces/dashes stripped', () => {
   // digits-only extraction should still work
-  assertEquals(toLocalLK('+94-71-6905898'), '0716905898');
+  assertEquals(toLocalLK('+94-77-1234567'), '0771234567');
 });
 
 Deno.test('toLocalLK: passes through unknown format unchanged', () => {
@@ -44,28 +44,28 @@ Deno.test('toLocalLK: passes through unknown format unchanged', () => {
 
 Deno.test('toLocalLK: 9-digit input (no leading zero, +94 prefix via UI) round-trips', () => {
   // UI sends '+94' + 9 digits; normalise back to local
-  const uiInput = '+94' + '716905898'; // what the frontend constructs
-  assertEquals(toLocalLK(uiInput), '0716905898');
+  const uiInput = '+94' + '771234567'; // what the frontend constructs
+  assertEquals(toLocalLK(uiInput), '0771234567');
 });
 
 // ── Additional normalisation cases (Bug-fix coverage: DB phone format mismatch) ─
 
 Deno.test('toLocalLK: 94XXXXXXXXX without + prefix still converts (digits-only input)', () => {
   // Some systems strip the leading '+' — still 11 digits starting with 94
-  assertEquals(toLocalLK('94716905898'), '0716905898');
+  assertEquals(toLocalLK('94771234567'), '0771234567');
   assertEquals(toLocalLK('94771234567'), '0771234567');
 });
 
 Deno.test('toLocalLK: +94 with spaces between groups converts correctly', () => {
   // E.g. "+94 71 234 5678" — spaces stripped, then 11 digits
-  assertEquals(toLocalLK('+94 71 690 5898'), '0716905898');
+  assertEquals(toLocalLK('+94 77 123 4567'), '0771234567');
 });
 
 Deno.test('toLocalLK: idempotent — normalising an already-normalised number is safe', () => {
-  const once  = toLocalLK('+94716905898');  // '0716905898'
+  const once  = toLocalLK('+94771234567');  // '0771234567'
   const twice = toLocalLK(once);            // already '07...', should stay
-  assertEquals(once, '0716905898');
-  assertEquals(twice, '0716905898');
+  assertEquals(once, '0771234567');
+  assertEquals(twice, '0771234567');
 });
 
 Deno.test('toLocalLK: too-short 07 prefix (< 10 digits) passes through unchanged', () => {
@@ -174,9 +174,9 @@ Deno.test('hashOtp: a freshly-generated OTP hashes correctly', async () => {
 Deno.test('hashOtp: hashing a normalised phone matches re-hash of same phone', async () => {
   // Confirms that toLocalLK output feeds consistently into hashOtp
   // (used in OTP verification flows)
-  const phone = toLocalLK('+94716905898'); // '0716905898'
+  const phone = toLocalLK('+94771234567'); // '0771234567'
   const h1 = await hashOtp(phone);
-  const h2 = await hashOtp('0716905898');  // same value directly
+  const h2 = await hashOtp('0771234567');  // same value directly
   assertEquals(h1, h2);
 });
 

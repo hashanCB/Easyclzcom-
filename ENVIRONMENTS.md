@@ -1,31 +1,34 @@
 # Environments — DEV vs PROD
 
-Two fully separate Supabase projects so you can test freely without touching real users.
+Run two fully separate Supabase projects so you can test freely without touching
+real users.
 
 | | DEV (testing) | PROD (live users) |
 |---|---|---|
-| Supabase project | `easyclz-dev` | `ClassPay` |
-| Project ref | `fxbfxfmtmmyuufqqddsu` | `kesssbvejyeefyaqjobk` |
-| URL | https://fxbfxfmtmmyuufqqddsu.supabase.co | https://kesssbvejyeefyaqjobk.supabase.co |
-| Region | ap-southeast-2 | ap-south-1 |
-| Stripe | test mode | live mode (set at launch) |
-| SMS | demo (TextLKDemo) | live sender (set at launch) |
-| Super admin | superadmin@teachers.local / `SuperAdmin123!` | (your prod password) |
+| Supabase project | your dev project | your prod project |
+| Project ref | `<DEV_PROJECT_REF>` | `<PROD_PROJECT_REF>` |
+| URL | `https://<DEV_PROJECT_REF>.supabase.co` | `https://<PROD_PROJECT_REF>.supabase.co` |
+| Stripe | test mode | live mode |
+| SMS | demo sender | live sender |
+| Super admin | a dev-only account you create | a separate prod account |
+
+> Use different super-admin credentials on each project, and never reuse the
+> seed/demo password (`supabase/seed.sql`) on a hosted project.
 
 ## Switch your local machine between them
 
 ```bash
-./use-env.sh dev     # local apps talk to easyclz-dev  (safe testing)
+./use-env.sh dev     # local apps talk to the dev project (safe testing)
 ./use-env.sh prod    # local apps talk to the live project
 ```
 
 This rewrites the **local** env files only:
 - `super-admin/.env.local`, `student-app/.env.local` ← `.env.dev` / `.env.prod`
-- `teacher-app/.env.local` ← `.env.dev` (dev); removed for prod so the committed `.env` (= prod) is used.
+- `teacher-app/.env.local` ← `.env.dev` (dev); removed for prod so the local `.env` (= prod) is used.
 
 After switching, restart dev servers. For Expo run `expo start -c` to clear the cache.
 
-> The live web apps on **Vercel are not affected** — they read Vercel's own
+> Live web apps on **Vercel are not affected** — they read Vercel's own
 > environment variables. `use-env.sh` only changes what your machine points at.
 
 ## Deploying a change to PROD (the safe rhythm)
@@ -34,9 +37,9 @@ After switching, restart dev servers. For Expo run `expo start -c` to clear the 
 2. When it works, ship to PROD:
    ```bash
    cd super-admin/packages/db-schema
-   # migrations (PROD)
+   # migrations (PROD) — reads the DB password from your local .env
    set -a && source ../../.env && set +a
-   npx supabase@2 db push                       # PROD (uses .env DB password)
+   npx supabase@2 db push
    # functions (PROD)
    npx supabase@2 functions deploy <name> --use-api
    ```
@@ -49,12 +52,12 @@ columns/tables — never rename/drop — so old installed app versions keep work
 ## Deploying to DEV
 
 ```bash
+export SUPABASE_ACCESS_TOKEN=<your-access-token>
 cd super-admin/packages/db-schema
-TOK=$(security find-generic-password -s "Supabase CLI" -w); export SUPABASE_ACCESS_TOKEN=$(echo "${TOK#go-keyring-base64:}" | base64 -d)
 # migrations
-npx supabase@2 db push --db-url "postgresql://postgres.fxbfxfmtmmyuufqqddsu:<DB_PASSWORD>@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres"
+npx supabase@2 db push --db-url "postgresql://postgres.<DEV_PROJECT_REF>:<DB_PASSWORD>@<region>.pooler.supabase.com:5432/postgres"
 # functions
-npx supabase@2 functions deploy <name> --project-ref fxbfxfmtmmyuufqqddsu --use-api
+npx supabase@2 functions deploy <name> --project-ref <DEV_PROJECT_REF> --use-api
 ```
 
 ## Gotcha when creating a NEW Supabase project
@@ -65,7 +68,7 @@ must be **enabled** in the project's Auth config or every login fails with
 "Access denied. Super admin accounts only." Enable it:
 
 ```bash
-TOK=$(security find-generic-password -s "Supabase CLI" -w); export SUPABASE_ACCESS_TOKEN=$(echo "${TOK#go-keyring-base64:}" | base64 -d)
+export SUPABASE_ACCESS_TOKEN=<your-access-token>
 curl -s -X PATCH "https://api.supabase.com/v1/projects/<REF>/config/auth" \
   -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H "Content-Type: application/json" \
   -d '{"hook_custom_access_token_enabled":true,"hook_custom_access_token_uri":"pg-functions://postgres/public/custom_access_token_hook"}'
@@ -74,33 +77,25 @@ curl -s -X PATCH "https://api.supabase.com/v1/projects/<REF>/config/auth" \
 (Or Dashboard → Authentication → Hooks → Custom Access Token →
 `public.custom_access_token_hook`.)
 
-## Still TODO for a complete DEV environment
+## SMS
 
-- [x] **SMS token:** `TEXTLK_API_TOKEN` + `TEXTLK_SENDER_ID=TextLKDemo` set on
-      BOTH dev and prod (same text.lk account/gateway). Dev messages are
-      prefixed `[DEV]`. OTP rate-limit is skipped in dev for fast testing.
-- [ ] **Stripe test keys:** enter them in the dev super-admin Settings → Stripe Keys (test mode is already on).
-### R2 file storage (dev vs prod)
+Set `TEXTLK_API_TOKEN` + `TEXTLK_SENDER_ID` on both dev and prod. Dev messages are
+prefixed `[DEV]` and the OTP rate-limit is skipped in dev for fast testing.
+
+## R2 file storage (dev vs prod)
 
 | | DEV | PROD |
 |---|---|---|
 | Worker | `r2-worker-dev` | `r2-worker-prod` |
 | Bucket | `class-dev` | `class-prod` |
-| Validates tokens from | easyclz-dev | ClassPay (prod) |
+| Validates tokens from | dev project | prod project |
 
-Config lives in `/Users/Hashan/Class/apps/r2-worker/wrangler.toml` (`[env.dev]` /
-`[env.prod]`). The teacher app + dev edge functions already point at
-`r2-worker-dev`. **Deploy the dev worker once** (the stored wrangler token had
-expired — re-login first):
+The worker config lives in a separate `r2-worker` project (`[env.dev]` /
+`[env.prod]` in its `wrangler.toml`). The teacher app + dev edge functions point
+at `r2-worker-dev`.
 
 ```bash
-cd /Users/Hashan/Class/apps/r2-worker
-npx wrangler login          # token needs R2 + Workers permissions
-./setup-dev.sh              # creates class-dev bucket, deploys, sets secrets
+npx wrangler login                 # token needs R2 + Workers permissions
+npx wrangler deploy --env dev
+npx wrangler deploy --env prod
 ```
-
-Deploy/redeploy **prod** worker after worker code changes:
-`npx wrangler deploy --env prod`
-
-Until the dev worker is deployed, dev file uploads fail cleanly (they no longer
-write to the prod bucket).

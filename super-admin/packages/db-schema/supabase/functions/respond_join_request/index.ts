@@ -217,7 +217,7 @@ Deno.serve(async (req) => {
 
     if (!matchId && request.student_phone) {
       // Match by phone, format-agnostic. The teacher may have typed the number
-      // as 0716905898, +94716905898, 94716905898 or with spaces; the account
+      // as 0771234567, +94771234567, 94771234567 or with spaces; the account
       // phone is canonical local format. Compare by the last-9-digit key so any
       // of these merge into the teacher's existing record instead of duplicating.
       const wantKey = phoneKey(request.student_phone);
